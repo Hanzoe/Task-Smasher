@@ -184,6 +184,10 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
             <option value="monthly">🔁 Monthly</option>
          </select>
          <input type="date" id="detail-date" title="Move Date" />
+         <div style="display: flex; align-items: center; gap: 4px; margin-left: 8px; border-left: 1px solid var(--border-color); padding-left: 8px;">
+            <span style="font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;">Copy to:</span>
+            <input type="date" id="copy-date" title="Copy to Date" />
+         </div>
       </div>
       <div class="detail-panel-body">
         <div id="vditor-container"></div>
@@ -259,6 +263,7 @@ const btnCloseDetail = document.getElementById('btn-close-detail') as HTMLButton
 const detailPanelTitle = document.getElementById('detail-panel-title') as HTMLInputElement;
 const detailRecurrence = document.getElementById('detail-recurrence') as HTMLSelectElement;
 const detailDate = document.getElementById('detail-date') as HTMLInputElement;
+const copyDate = document.getElementById('copy-date') as HTMLInputElement;
 
 function openDetailModal() {
   taskDetailBackdrop.classList.add('open');
@@ -388,6 +393,29 @@ detailDate.addEventListener('change', () => {
            todo.createdAt = detailDate.value + "T00:00:00.000Z";
            renderTodos();
            saveTodos();
+       }
+    }
+});
+
+copyDate.addEventListener('change', () => {
+    if (activeDetailTodoId) {
+       const todo = todos.find(t => t.id === activeDetailTodoId);
+       if (todo && copyDate.value) {
+           const newDateStr = copyDate.value;
+           const newDate = newDateStr + "T00:00:00.000Z";
+           if (todo.createdAt !== newDate) {
+               const newTodo = { 
+                   ...todo, 
+                   id: Date.now().toString(), 
+                   createdAt: newDate, 
+                   completedDates: [], 
+                   completed: false 
+               };
+               todos.push(newTodo);
+               copyDate.value = '';
+               renderTodos();
+               saveTodos();
+           }
        }
     }
 });
@@ -840,6 +868,7 @@ function renderTodos() {
         
         detailRecurrence.value = todo.recurrence || 'none';
         detailDate.value = todo.createdAt.split('T')[0];
+        copyDate.value = '';
         
         openDetailModal();
     });
