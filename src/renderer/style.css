@@ -707,122 +707,122 @@ body.mini-mode .todo-item {
   background: var(--danger);
 }
 
-/* Mini mode UI patches for calendar */
-body.mini-mode #btn-back-calendar {
-  display: none;
+/* === MINI MODE LAYOUT OVERHAUL === */
+
+/* Hide back button and calendar in mini mode */
+body.mini-mode #btn-back-calendar { display: none; }
+body.mini-mode .calendar-cell { min-height: 40px; padding: 4px; border-radius: 6px; }
+body.mini-mode .date-number { font-size: 0.8rem; }
+
+/* Compact header */
+body.mini-mode .titlebar {
+  height: 32px;
+  padding: 0 10px;
+}
+body.mini-mode .titlebar-title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  opacity: 0.6;
 }
 
+/* Overall content area in mini */
+body.mini-mode .content {
+  padding: 6px 10px 10px;
+}
+
+/* Header section: date + summary side by side */
 body.mini-mode .header-section {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+body.mini-mode #detail-date-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+body.mini-mode .summary {
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }
 
-body.mini-mode .task-image {
-  max-height: 60px;
-}
+/* Hide the image preview area in mini mode */
+body.mini-mode .preview-container { display: none; }
+body.mini-mode .task-image { max-height: 40px; }
+body.mini-mode .daily-thoughts-container { display: none; }
 
-/* Default hidden */
+/* Quick Add Form */
 .mini-mode-add-form {
   display: none;
-  background: var(--app-bg);
-  padding: 8px 12px;
+  background: rgba(255,255,255,0.5);
+  padding: 6px 10px;
   border-radius: 8px;
   border: 1px solid var(--border-color);
-  margin-top: 10px;
-  gap: 8px;
+  margin-bottom: 8px;
+  gap: 6px;
   align-items: center;
 }
-
+@media (prefers-color-scheme: dark) {
+  .mini-mode-add-form { background: rgba(0,0,0,0.2); }
+}
 .mini-mode-add-form input {
   flex: 1;
+  min-width: 0; /* critical: allows shrinking below content width */
+  overflow: hidden;
+  text-overflow: ellipsis;
   background: transparent;
   border: none;
   color: var(--text-main);
   outline: none;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
 }
-
 .mini-mode-add-form select {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  outline: none;
-  flex-shrink: 0;
-  appearance: none; /* remove default arrow */
-  -webkit-appearance: none;
-  font-size: 1rem;
+  background: transparent; border: none; cursor: pointer;
+  outline: none; flex-shrink: 0; appearance: none;
+  -webkit-appearance: none; font-size: 0.9rem;
 }
-
 .mini-mode-add-form button {
-  background: var(--primary);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-weight: bold;
-  flex-shrink: 0;
+  background: var(--primary); color: white; border: none;
+  border-radius: 50%; width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-weight: bold; flex-shrink: 0; font-size: 0.9rem;
 }
+body.mini-mode .mini-mode-add-form { display: flex; }
 
-body.mini-mode .mini-mode-add-form {
-  display: flex; /* Visible in mini mode */
-}
-
-/* Mini Mode: Flatten Matrix */
+/* Flatten matrix into single scrollable list */
 body.mini-mode .matrix-container {
   display: flex;
   flex-direction: column;
   gap: 0;
-  margin-top: 10px;
+  margin-top: 0;
+  overflow-y: auto;
+  flex: 1;
 }
-
 body.mini-mode .quadrant {
-  min-height: auto;
-  padding: 0;
-  background: transparent;
-  border: none;
+  min-height: auto; padding: 0; background: transparent; border: none;
 }
-
 body.mini-mode .quadrant-header,
-body.mini-mode .inline-add-form {
-  display: none; /* Hide headers and individual inputs, rely on global OR just view */
-}
+body.mini-mode .inline-add-form { display: none; }
+body.mini-mode .quadrant .todo-list { max-height: none; }
+body.mini-mode .todo-list { display: flex; flex-direction: column; gap: 4px; }
 
-body.mini-mode .todo-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* Add colored indicators before tasks based on quadrant in mini-mode */
-body.mini-mode .quadrant-q1 .todo-item::before {
-  content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--q1-color); flex-shrink: 0;
-}
-body.mini-mode .quadrant-q2 .todo-item::before {
-  content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--q2-color); flex-shrink: 0;
-}
-body.mini-mode .quadrant-q3 .todo-item::before {
-  content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--q3-color); flex-shrink: 0;
-}
-body.mini-mode .quadrant-q4 .todo-item::before {
-  content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--q4-color); flex-shrink: 0;
-}
-
+/* Compact task items with colored priority dots */
 body.mini-mode .todo-item {
   align-items: center;
-  padding: 8px 12px;
-  font-size: 0.9rem;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  border-radius: 6px;
 }
+body.mini-mode .todo-item .delete-btn { display: none; } /* hide trash in mini */
 
-/* Make sure the colored dot has correct gap since we rely on the gap in .todo-item */
-body.mini-mode .todo-item::before {
-  margin-right: 6px;
-}
+/* Colored priority indicator dots */
+body.mini-mode .quadrant-q1 .todo-item::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--q1-color); flex-shrink: 0; margin-right: 6px; }
+body.mini-mode .quadrant-q2 .todo-item::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--q2-color); flex-shrink: 0; margin-right: 6px; }
+body.mini-mode .quadrant-q3 .todo-item::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--q3-color); flex-shrink: 0; margin-right: 6px; }
+body.mini-mode .quadrant-q4 .todo-item::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--q4-color); flex-shrink: 0; margin-right: 6px; }
+
+/* === END MINI MODE === */
 
 /* View Specific */
 #view-detail .todo-list {
@@ -882,122 +882,256 @@ body.mini-mode .todo-item::before {
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 8px;
+  gap: 6px;
   flex: 1;
 }
 
+/* Monthly Stats Bar */
+.calendar-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin: 6px 0 6px;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  transition: transform 0.2s;
+}
+
+.stat-card:hover { transform: translateY(-2px); }
+
+@media (prefers-color-scheme: dark) {
+  .stat-card { background: rgba(0,0,0,0.2); }
+}
+
+.stat-value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text-main);
+}
+
+/* Completion % card uses dynamic color */
+#stat-done .stat-value {
+  color: var(--pct-color, var(--text-main));
+}
+
+.stat-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* Calendar cell enhancements */
 .calendar-cell {
   background: rgba(255, 255, 255, 0.3);
   border: 1px solid var(--border-color);
-  border-radius: 10px;
-  min-height: 80px;
-  padding: 8px;
+  border-radius: 8px;
+  min-height: 60px;
+  padding: 4px 6px 3px;
   display: flex;
   flex-direction: column;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Heat-map overlay using CSS custom property --heat */
+.calendar-cell.has-tasks::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(99, 102, 241, calc(var(--heat, 0) * 0.18));
+  pointer-events: none;
+  border-radius: inherit;
 }
 
 @media (prefers-color-scheme: dark) {
-  .calendar-cell {
-    background: rgba(0,0,0,0.15);
-  }
+  .calendar-cell { background: rgba(0,0,0,0.15); }
 }
 
 .calendar-cell:not(.empty):hover {
-  transform: translateY(-4px) scale(1.02);
+  transform: translateY(-3px) scale(1.02);
   background: rgba(255, 255, 255, 0.7);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  z-index: 2;
 }
 
 @media (prefers-color-scheme: dark) {
   .calendar-cell:not(.empty):hover {
     background: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   }
 }
 
 .calendar-cell.today {
   border-color: var(--primary);
-  background: rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+  background: rgba(99, 102, 241, 0.08);
 }
 
-.calendar-cell.empty {
-  visibility: hidden;
+.calendar-cell.empty { visibility: hidden; }
+
+.calendar-cell.future { opacity: 0.5; }
+
+.calendar-cell.all-complete {
+  border-color: var(--success);
 }
 
 .date-number {
   font-weight: 600;
-  font-size: 1rem;
-  margin-bottom: 4px;
+  font-size: 0.95rem;
+  margin-bottom: 2px;
 }
 
+/* Task count badge */
 .task-indicators {
   display: flex;
-  flex-direction: column;
-  flex: 1;
-  justify-content: flex-end;
-}
-
-.indicators-row {
-  display: flex;
+  align-items: center;
   gap: 4px;
-  flex-wrap: wrap;
+  flex: 1;
 }
 
-.indicator.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--danger);
-  opacity: 0.8;
+.task-count-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(0,0,0,0.06);
+  padding: 1px 5px;
+  border-radius: 10px;
 }
 
-.indicator.all-done {
-  width: 100%;
-  height: 6px;
-  border-radius: 4px;
-  background: var(--success);
-  opacity: 0.8;
+.all-done-check {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--success);
 }
 
-/* Task Detail Slider Panel */
+/* Completion mini progress bar at cell bottom */
+.completion-bar {
+  height: 3px;
+  background: rgba(0,0,0,0.08);
+  border-radius: 2px;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.completion-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--q2-color), var(--success));
+  transition: width 0.4s ease;
+}
+
+
+/* Task Detail Modal */
+.task-detail-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.task-detail-backdrop.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
 .task-detail-panel {
-  position: absolute;
-  top: 40px; /* Below titlebar */
-  right: -450px;
-  bottom: 0;
-  width: 450px;
-  max-width: 100%;
   background: var(--app-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-left: 1px solid var(--border-color);
-  box-shadow: -4px 0 24px rgba(0,0,0,0.1);
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.25);
+  width: 680px;
+  max-width: 90vw;
+  height: 560px;
+  max-height: 85vh;
   display: flex;
   flex-direction: column;
-  transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 100;
+  transform: scale(0.96) translateY(8px);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
 }
 
-.task-detail-panel.open {
-  right: 0;
+.task-detail-backdrop.open .task-detail-panel {
+  transform: scale(1) translateY(0);
 }
 
 .detail-panel-header {
-  padding: 16px;
+  padding: 16px 20px;
   border-bottom: 1px solid var(--border-color);
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
 }
 
-.detail-panel-title {
+/* Editable task title input */
+.detail-title-input {
+  flex: 1;
+  background: none;
+  border: none;
+  font-size: 1.15rem;
   font-weight: 600;
-  font-size: 1.1rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: var(--text-main);
+  font-family: inherit;
+  outline: none;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.15s;
+  min-width: 0;
+}
+
+.detail-title-input:focus {
+  background: rgba(99, 102, 241, 0.07);
+}
+
+/* Controls bar: recurrence + date */
+.detail-panel-controls {
+  display: flex;
+  gap: 10px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.02);
+  flex-shrink: 0;
+}
+
+.detail-panel-controls select,
+.detail-panel-controls input[type='date'] {
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--app-bg);
+  color: var(--text-main);
+  font-size: 0.85rem;
+  outline: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+@media (prefers-color-scheme: dark) {
+  .detail-panel-controls select,
+  .detail-panel-controls input[type='date'] {
+    color-scheme: dark;
+  }
 }
 
 .detail-panel-body {
@@ -1005,7 +1139,7 @@ body.mini-mode .todo-item::before {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: white; /* Vditor prefers solid background usually */
+  background: white;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -1015,6 +1149,7 @@ body.mini-mode .todo-item::before {
 #vditor-container {
   flex: 1;
   width: 100%;
+  overflow-y: auto;
 }
 
 .vditor-reset {

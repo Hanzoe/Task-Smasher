@@ -59,6 +59,25 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       <div class="calendar-weekdays">
         <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
       </div>
+      <!-- Monthly Stats Bar -->
+      <div id="calendar-stats" class="calendar-stats">
+        <div class="stat-card" id="stat-total">
+          <span class="stat-value">0</span>
+          <span class="stat-label">This Month</span>
+        </div>
+        <div class="stat-card" id="stat-done">
+          <span class="stat-value">0%</span>
+          <span class="stat-label">Completed</span>
+        </div>
+        <div class="stat-card" id="stat-streak">
+          <span class="stat-value">0 🔥</span>
+          <span class="stat-label">Day Streak</span>
+        </div>
+        <div class="stat-card" id="stat-best-day">
+          <span class="stat-value">—</span>
+          <span class="stat-label">Best Day</span>
+        </div>
+      </div>
       <div id="calendar-grid" class="calendar-grid">
         <!-- Rendered via JS -->
       </div>
@@ -143,25 +162,27 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     </div>
   </div>
 
-  <!-- Task Detail Slider Panel -->
-  <div id="task-detail-panel" class="task-detail-panel">
-    <div class="detail-panel-header">
-      <div class="detail-panel-title" id="detail-panel-title">Task Details</div>
-      <button class="action-btn" id="btn-close-detail" title="Close Panel">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-      </button>
-    </div>
-    <div class="detail-panel-body">
-      <div style="padding: 10px 16px; display: flex; gap: 10px; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.02);">
-         <select id="detail-recurrence" title="Recurrence" style="padding:4px; border-radius:4px; border:1px solid var(--border-color); background: var(--app-bg); color: var(--text-main); font-size: 0.85rem; outline:none; cursor:pointer;">
+  <!-- Task Detail Modal -->
+  <div id="task-detail-backdrop" class="task-detail-backdrop">
+    <div id="task-detail-panel" class="task-detail-panel">
+      <div class="detail-panel-header">
+        <input type="text" class="detail-title-input" id="detail-panel-title" placeholder="Task title..." />
+        <button class="action-btn" id="btn-close-detail" title="Close Panel">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="detail-panel-controls">
+         <select id="detail-recurrence" title="Recurrence">
             <option value="none">🔁 None</option>
             <option value="daily">🔁 Daily</option>
             <option value="weekly">🔁 Weekly</option>
             <option value="monthly">🔁 Monthly</option>
          </select>
-         <input type="date" id="detail-date" title="Move Date" style="padding:4px; border-radius:4px; border:1px solid var(--border-color); background: var(--app-bg); color: var(--text-main); font-size: 0.85rem; outline:none; cursor:pointer;"/>
+         <input type="date" id="detail-date" title="Move Date" />
       </div>
-      <div id="vditor-container"></div>
+      <div class="detail-panel-body">
+        <div id="vditor-container"></div>
+      </div>
     </div>
   </div>
 
@@ -176,11 +197,19 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
 const viewCalendar = document.getElementById('view-calendar') as HTMLDivElement;
 const viewDetail = document.getElementById('view-detail') as HTMLDivElement;
 
+const taskDetailBackdrop = document.getElementById('task-detail-backdrop') as HTMLDivElement;
 const taskDetailPanel = document.getElementById('task-detail-panel') as HTMLDivElement;
 const btnCloseDetail = document.getElementById('btn-close-detail') as HTMLButtonElement;
-const detailPanelTitle = document.getElementById('detail-panel-title') as HTMLDivElement;
+const detailPanelTitle = document.getElementById('detail-panel-title') as HTMLInputElement;
 const detailRecurrence = document.getElementById('detail-recurrence') as HTMLSelectElement;
 const detailDate = document.getElementById('detail-date') as HTMLInputElement;
+
+function openDetailModal() {
+  taskDetailBackdrop.classList.add('open');
+}
+function closeDetailModal() {
+  taskDetailBackdrop.classList.remove('open');
+}
 
 const listQ1 = document.getElementById('todo-list-q1') as HTMLUListElement;
 const listQ2 = document.getElementById('todo-list-q2') as HTMLUListElement;
@@ -216,25 +245,38 @@ const zoomedImage = document.getElementById('zoomed-image') as HTMLImageElement;
 const btnCloseZoom = document.querySelector('.close-zoom-btn') as HTMLButtonElement;
 
 function closeZoom() {
-  zoomOverlay.classList.remove('active');
-  setTimeout(() => { zoomedImage.src = '' }, 300); // clear after animation
+  zoomOverlay?.classList.remove('active');
+  if (zoomedImage) setTimeout(() => { zoomedImage.src = '' }, 300);
 }
-btnCloseZoom.addEventListener('click', closeZoom);
-zoomOverlay.addEventListener('click', (e) => {
+btnCloseZoom?.addEventListener('click', closeZoom);
+zoomOverlay?.addEventListener('click', (e) => {
   if (e.target === zoomOverlay) closeZoom();
 });
 
 // Markdown Panel Hooks
-btnCloseDetail.addEventListener('click', () => {
-    taskDetailPanel.classList.remove('open');
+btnCloseDetail?.addEventListener('click', () => {
+    closeDetailModal();
     if (activeDetailTodoId && vditorInstance) {
        const todo = todos.find(t => t.id === activeDetailTodoId);
        if (todo) {
            todo.detailsMarkdown = vditorInstance.getValue();
+           // Save title changes
+           const newTitle = detailPanelTitle?.value.trim();
+           if (newTitle && newTitle !== todo.text) {
+               todo.text = newTitle;
+               renderTodos();
+           }
        }
     }
     activeDetailTodoId = null;
-    saveTodos(); // Save any pending edits
+    saveTodos();
+});
+
+// Close when clicking the backdrop
+taskDetailBackdrop?.addEventListener('mousedown', (e) => {
+    if (e.target === taskDetailBackdrop) {
+        btnCloseDetail?.click();
+    }
 });
 
 // Image double click (Needs to be hooked via DOM observation or Vditor's image click API if available, 
@@ -271,18 +313,6 @@ detailDate.addEventListener('change', () => {
            saveTodos();
        }
     }
-});
-
-// Click outside panel to close
-document.addEventListener('mousedown', (e) => {
-  if (taskDetailPanel.classList.contains('open')) {
-     const target = e.target as HTMLElement;
-     if (!taskDetailPanel.contains(target) && 
-         !target.closest('.todo-item') && 
-         !target.closest('.image-zoom-overlay')) {
-         btnCloseDetail.click();
-     }
-  }
 });
 
 // Window Controls
@@ -340,6 +370,45 @@ btnBackCalendar.addEventListener('click', showCalendar);
 btnPrevMonth.addEventListener('click', () => { currentMonthOffset--; renderCalendar(); });
 btnNextMonth.addEventListener('click', () => { currentMonthOffset++; renderCalendar(); });
 
+function calculateStreak(): number {
+  const todayStr = getLocalISODate(new Date());
+  let streak = 0;
+  const checkDate = new Date();
+
+  // Bounded loop — max 365 days back, guaranteed to exit
+  for (let i = 0; i < 365; i++) {
+    const dateStr = getLocalISODate(checkDate);
+    const dayTasks = todos.filter(t => t.createdAt.startsWith(dateStr));
+
+    if (dayTasks.length === 0) {
+      if (dateStr === todayStr) {
+        // Today has no tasks yet — skip, don't break the streak
+        checkDate.setDate(checkDate.getDate() - 1);
+        continue;
+      }
+      break; // Past day with no tasks → streak ends
+    }
+
+    const allDone = dayTasks.every(t =>
+      (t.completedDates || []).includes(dateStr) || t.completed
+    );
+
+    if (!allDone) {
+      if (dateStr === todayStr) {
+        // Today not fully done yet — skip, give user time
+        checkDate.setDate(checkDate.getDate() - 1);
+        continue;
+      }
+      break; // Past day incomplete → streak ends
+    }
+
+    streak++;
+    checkDate.setDate(checkDate.getDate() - 1);
+  }
+
+  return streak;
+}
+
 function renderCalendar() {
   calendarGrid.innerHTML = '';
   const now = new Date();
@@ -354,6 +423,34 @@ function renderCalendar() {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const todayStr = getLocalISODate(new Date());
 
+  // ── Monthly Stats ──
+  let monthTotal = 0, monthDone = 0, bestDayCount = 0, bestDayStr = '—';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = getLocalISODate(new Date(year, month, d));
+    const dayTasks = todos.filter(t => t.createdAt.startsWith(ds));
+    monthTotal += dayTasks.length;
+    const doneTasks = dayTasks.filter(t => (t.completedDates || []).includes(ds) || t.completed).length;
+    monthDone += doneTasks;
+    if (doneTasks > bestDayCount) { bestDayCount = doneTasks; bestDayStr = `${d}日 (${doneTasks}✓)`; }
+  }
+  const completionPct = monthTotal > 0 ? Math.round(monthDone / monthTotal * 100) : 0;
+  const streak = calculateStreak();
+
+  // Update stat cards safely
+  const statTotal = document.querySelector('#stat-total .stat-value');
+  const statDone = document.querySelector('#stat-done .stat-value');
+  const statStreak = document.querySelector('#stat-streak .stat-value');
+  const statBest = document.querySelector('#stat-best-day .stat-value');
+  if (statTotal) statTotal.textContent = String(monthTotal);
+  if (statDone) statDone.textContent = `${completionPct}%`;
+  if (statStreak) statStreak.textContent = `${streak} 🔥`;
+  if (statBest) statBest.textContent = bestDayStr;
+
+  // Completion % colour of the #stat-done card
+  const doneCard = document.getElementById('stat-done');
+  if (doneCard) doneCard.style.setProperty('--pct-color',
+    completionPct >= 80 ? 'var(--success)' : completionPct >= 40 ? 'var(--q2-color)' : 'var(--danger)');
+
   // Padding days
   for (let i = 0; i < firstDay; i++) {
     const emptyCell = document.createElement('div');
@@ -366,32 +463,33 @@ function renderCalendar() {
     const dateObj = new Date(year, month, day);
     const dateStr = getLocalISODate(dateObj);
     
-    // Calculate tasks
     const dayTasks = todos.filter(t => t.createdAt.startsWith(dateStr));
-    const completed = dayTasks.filter(t => t.completed).length;
-    const pending = dayTasks.length - completed;
+    const completedCount = dayTasks.filter(t => (t.completedDates || []).includes(dateStr) || t.completed).length;
+    const pct = dayTasks.length > 0 ? completedCount / dayTasks.length : 0;
     
     const cell = document.createElement('div');
     cell.className = 'calendar-cell';
     if (dateStr === todayStr) cell.classList.add('today');
+    if (dateStr > todayStr) cell.classList.add('future');
+    if (dayTasks.length > 0 && pct === 1) cell.classList.add('all-complete');
 
-    // Indicators logic
-    let indicatorsHtml = '';
+    // Heat-map: set opacity based on task density
     if (dayTasks.length > 0) {
-      if (pending === 0) {
-        indicatorsHtml = `<div class="indicator all-done"></div>`;
-      } else {
-        const dots = [];
-        for(let j=0; j<Math.min(pending, 5); j++) {
-           dots.push(`<div class="indicator dot"></div>`);
-        }
-        indicatorsHtml = `<div class="indicators-row">${dots.join('')}</div>`;
-      }
+      const intensity = Math.min(dayTasks.length / 8, 1); // max at 8 tasks
+      cell.style.setProperty('--heat', String(intensity));
+      cell.classList.add('has-tasks');
     }
+
+    // Completion mini-bar width
+    const barWidth = dayTasks.length > 0 ? Math.round(pct * 100) : 0;
 
     cell.innerHTML = `
       <div class="date-number">${day}</div>
-      <div class="task-indicators">${indicatorsHtml}</div>
+      <div class="task-indicators">
+        ${dayTasks.length > 0 ? `<div class="task-count-badge">${completedCount}/${dayTasks.length}</div>` : ''}
+        ${dayTasks.length > 0 && pct === 1 ? `<div class="all-done-check">✓</div>` : ''}
+      </div>
+      ${dayTasks.length > 0 ? `<div class="completion-bar"><div class="completion-fill" style="width:${barWidth}%"></div></div>` : ''}
     `;
 
     cell.addEventListener('click', () => showDetail(dateStr));
@@ -574,7 +672,7 @@ function renderTodos() {
         if ((e.target as HTMLElement).tagName.toLowerCase() === 'input') return;
         
         activeDetailTodoId = todo.id;
-        detailPanelTitle.textContent = todo.text;
+        detailPanelTitle.value = todo.text; // Use .value since it's now an input
         
         if (vditorInstance) {
            let rawMd = todo.detailsMarkdown || '';
@@ -587,7 +685,7 @@ function renderTodos() {
         detailRecurrence.value = todo.recurrence || 'none';
         detailDate.value = todo.createdAt.split('T')[0];
         
-        taskDetailPanel.classList.add('open');
+        openDetailModal();
     });
 
     // Deleted Zoom Image inline listeners since it's now in the detail panel
@@ -761,14 +859,15 @@ async function loadTodos() {
           }
       },
       after: () => {
-         // Render application after Vditor is ready
+         // Also refresh after Vditor fully initializes
          renderCalendar();
       }
     });
   };
-  loadData();
-  // Initialize to calendar
-  showCalendar();
+  // Load data first, then show calendar with real data
+  loadData().then(() => {
+    showCalendar();
+  });
 }
 
 

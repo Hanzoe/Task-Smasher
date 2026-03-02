@@ -21,9 +21,9 @@ let mainWindow: BrowserWindow | null = null
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 600,
-    height: 800,
-    minWidth: 400,
+    width: 900,
+    height: 680,
+    minWidth: 700,
     minHeight: 500,
     frame: false, // Frameless window for custom premium titlebar
     transparent: true,
@@ -41,6 +41,7 @@ function createWindow() {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+  mainWindow.center() // Always appear in screen center
 }
 
 app.whenReady().then(() => {
@@ -69,11 +70,14 @@ ipcMain.on('toggle-mini-mode', (_, isMini: boolean) => {
   
   if (isMini) {
     mainWindow.setAlwaysOnTop(true, 'floating')
-    mainWindow.setSize(300, 400)
-    // Optional: move to top right or somewhere
+    mainWindow.setMinimumSize(200, 180)
+    mainWindow.setSize(300, 480) // smaller default, user can resize freely
+    mainWindow.setResizable(true) // ensure resizable
   } else {
     mainWindow.setAlwaysOnTop(false)
-    mainWindow.setSize(600, 800)
+    mainWindow.setMinimumSize(700, 500)
+    mainWindow.setSize(900, 680)
+    mainWindow.setResizable(true)
     mainWindow.center()
   }
 })
