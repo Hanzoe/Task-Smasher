@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --app-bg: #ffffff;
+  --app-bg: rgba(255, 255, 255, var(--app-opacity, 1));
   --app-blur: 0px;
   --text-main: #1f2937;
   --text-muted: #6b7280;
@@ -10,6 +10,7 @@
   --border-color: rgba(0, 0, 0, 0.1);
   --danger: #ef4444;
   --success: #10b981;
+  --app-opacity: 1;
   
   --q1-color: #ef4444; /* Urgent Important */
   --q2-color: #f59e0b; /* Important Not Urgent */
@@ -18,14 +19,22 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --app-bg: #111827;
+  :root:not([data-theme="light"]) {
+    --app-bg: rgba(17, 24, 39, var(--app-opacity, 1));
     --text-main: #f9fafb;
     --text-muted: #9ca3af;
     --border-color: rgba(255, 255, 255, 0.1);
     --primary: #818cf8;
     --primary-hover: #6366f1;
   }
+}
+:root[data-theme="dark"] {
+  --app-bg: rgba(17, 24, 39, var(--app-opacity, 1));
+  --text-main: #f9fafb;
+  --text-muted: #9ca3af;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --primary: #818cf8;
+  --primary-hover: #6366f1;
 }
 
 body.mini-mode {
@@ -34,9 +43,12 @@ body.mini-mode {
 }
 
 @media (prefers-color-scheme: dark) {
-  body.mini-mode {
+  :root:not([data-theme="light"]) body.mini-mode {
     --app-bg: rgba(17, 24, 39, 0.75);
   }
+}
+:root[data-theme="dark"] body.mini-mode {
+  --app-bg: rgba(17, 24, 39, 0.75);
 }
 
 * {
@@ -164,9 +176,12 @@ input[type='text'] {
 }
 
 @media (prefers-color-scheme: dark) {
-  input[type='text'] {
+  :root:not([data-theme="light"]) input[type='text'] {
     background: rgba(0, 0, 0, 0.2);
   }
+}
+:root[data-theme="dark"] input[type='text'] {
+  background: rgba(0, 0, 0, 0.2);
 }
 
 input[type='text']:focus {
@@ -216,9 +231,12 @@ button.primary:active {
 }
 
 @media (prefers-color-scheme: dark) {
-  .todo-item {
+  :root:not([data-theme="light"]) .todo-item {
     background: rgba(0, 0, 0, 0.2);
   }
+}
+:root[data-theme="dark"] .todo-item {
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .todo-item:hover {
@@ -227,9 +245,12 @@ button.primary:active {
 }
 
 @media (prefers-color-scheme: dark) {
-  .todo-item:hover {
+  :root:not([data-theme="light"]) .todo-item:hover {
     background: rgba(0, 0, 0, 0.4);
   }
+}
+:root[data-theme="dark"] .todo-item:hover {
+  background: rgba(0, 0, 0, 0.4);
 }
 
 .todo-item.completed {
@@ -430,9 +451,12 @@ body.mini-mode .todo-item {
 }
 
 @media (prefers-color-scheme: dark) {
-  .date-btn {
+  :root:not([data-theme="light"]) .date-btn {
     background: rgba(0, 0, 0, 0.2);
   }
+}
+:root[data-theme="dark"] .date-btn {
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .date-btn:hover {
@@ -456,10 +480,14 @@ body.mini-mode .todo-item {
 }
 
 @media (prefers-color-scheme: dark) {
-  .date-picker {
+  :root:not([data-theme="light"]) .date-picker {
     background: rgba(0, 0, 0, 0.2);
     color-scheme: dark;
   }
+}
+:root[data-theme="dark"] .date-picker {
+  background: rgba(0, 0, 0, 0.2);
+  color-scheme: dark;
 }
 
 .summary {
@@ -487,12 +515,18 @@ body.mini-mode .todo-item {
 }
 
 @media (prefers-color-scheme: dark) {
-  .btn-icon {
+  :root:not([data-theme="light"]) .btn-icon {
     background: rgba(0,0,0,0.2);
   }
-  .btn-icon:hover {
+  :root:not([data-theme="light"]) .btn-icon:hover {
     background: rgba(0,0,0,0.5);
   }
+}
+:root[data-theme="dark"] .btn-icon {
+  background: rgba(0,0,0,0.2);
+}
+:root[data-theme="dark"] .btn-icon:hover {
+  background: rgba(0,0,0,0.5);
 }
 
 .preview-container {
@@ -557,9 +591,12 @@ body.mini-mode .todo-item {
 }
 
 @media (prefers-color-scheme: dark) {
-  .quadrant {
+  :root:not([data-theme="light"]) .quadrant {
     background: rgba(0,0,0,0.1);
   }
+}
+:root[data-theme="dark"] .quadrant {
+  background: rgba(0,0,0,0.1);
 }
 
 .quadrant-header {
@@ -611,9 +648,12 @@ body.mini-mode .todo-item {
 }
 
 @media (prefers-color-scheme: dark) {
-  .inline-add-form input {
+  :root:not([data-theme="light"]) .inline-add-form input {
     background: rgba(0,0,0,0.3);
   }
+}
+:root[data-theme="dark"] .inline-add-form input {
+  background: rgba(0,0,0,0.3);
 }
 
 .inline-add-form button {
@@ -644,10 +684,14 @@ body.mini-mode .todo-item {
 }
 
 @media (prefers-color-scheme: dark) {
-  .quadrant-select {
+  :root:not([data-theme="light"]) .quadrant-select {
     background: rgba(0, 0, 0, 0.4);
     color-scheme: dark;
   }
+}
+:root[data-theme="dark"] .quadrant-select {
+  background: rgba(0, 0, 0, 0.4);
+  color-scheme: dark;
 }
 
 /* Image Zoom Modal */
@@ -764,8 +808,9 @@ body.mini-mode .daily-thoughts-container { display: none; }
   align-items: center;
 }
 @media (prefers-color-scheme: dark) {
-  .mini-mode-add-form { background: rgba(0,0,0,0.2); }
+  :root:not([data-theme="light"]) .mini-mode-add-form { background: rgba(0,0,0,0.2); }
 }
+:root[data-theme="dark"] .mini-mode-add-form { background: rgba(0,0,0,0.2); }
 .mini-mode-add-form input {
   flex: 1;
   min-width: 0; /* critical: allows shrinking below content width */
@@ -1218,4 +1263,130 @@ body.mini-mode .calendar-cell {
 
 body.mini-mode .date-number {
   font-size: 0.8rem;
+}
+
+/* Settings Modal */
+.settings-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.settings-backdrop.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.settings-panel {
+  background: var(--app-bg);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  width: 400px;
+  max-width: 90vw;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transform: scale(0.96) translateY(8px);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.settings-backdrop.open .settings-panel {
+  transform: scale(1) translateY(0);
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 12px;
+}
+
+.settings-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setting-group label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.color-options {
+  display: flex;
+  gap: 10px;
+}
+
+.color-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.color-btn:hover {
+  transform: scale(1.1);
+}
+
+.color-btn.active {
+  border-color: var(--text-main);
+}
+
+.opacity-slider-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.opacity-slider {
+  flex: 1;
+}
+
+.path-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.path-input-group input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--text-main);
+  outline: none;
+  font-size: 0.85rem;
+}
+
+.path-input-group button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  background: var(--primary);
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.path-input-group button:hover {
+  background: var(--primary-hover);
 }

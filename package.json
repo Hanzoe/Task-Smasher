@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
+    "build:win": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false CSC_LINK=\"\" tsc && vite build && electron-builder",
     "serve": "electron ."
   },
   "build": {
@@ -18,12 +19,14 @@
     },
     "win": {
       "target": "portable",
+      "icon": "build/icon.png",
       "sign": null,
       "signingHashAlgorithms": null
     }
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
+    "cross-env": "^10.1.0",
     "electron": "^29.0.0",
     "electron-builder": "^24.9.1",
     "typescript": "^5.2.2",

@@ -40,6 +40,9 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       <button class="action-btn" id="btn-mini" title="Toggle Sticky Note Mode">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h16M4 16h16"/></svg>
       </button>
+      <button class="action-btn" id="btn-settings" title="Settings">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      </button>
       <button class="action-btn" id="btn-minimize" title="Minimize">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg>
       </button>
@@ -87,8 +90,10 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     <div id="view-detail" class="view-panel">
       <div class="header-section">
         <div class="date-controls">
-          <button id="btn-back-calendar" class="date-btn" style="padding: 6px 8px; margin-right: 8px;">&larr; Back</button>
-          <span id="detail-date-title" style="font-weight: 600; margin-left:8px;">YYYY-MM-DD</span>
+          <button id="btn-back-calendar" class="date-btn" style="padding: 6px 8px; margin-right: 8px;" title="Back to Calendar">&larr; Back</button>
+          <button id="btn-prev-day" class="date-btn" style="padding: 6px 8px;" title="Previous Day">&lt;</button>
+          <span id="detail-date-title" style="font-weight: 600; margin: 0 8px;">YYYY-MM-DD</span>
+          <button id="btn-next-day" class="date-btn" style="padding: 6px 8px;" title="Next Day">&gt;</button>
         </div>
         <div class="summary" id="daily-summary">0 Tasks</div>
       </div>
@@ -191,6 +196,57 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
     <button class="close-zoom-btn">&times;</button>
     <img id="zoomed-image" class="zoomed-image" src="" />
   </div>
+  <!-- Settings Modal -->
+  <div id="settings-backdrop" class="settings-backdrop">
+    <div class="settings-panel">
+      <div class="settings-header">
+        <h3>Settings</h3>
+        <button class="action-btn" id="btn-close-settings" title="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <div class="setting-group">
+        <label>Theme Color</label>
+        <div class="color-options">
+          <button class="color-btn active" style="background-color: #6366f1;" data-color="#6366f1" data-hover="#4f46e5"></button>
+          <button class="color-btn" style="background-color: #f43f5e;" data-color="#f43f5e" data-hover="#e11d48"></button>
+          <button class="color-btn" style="background-color: #10b981;" data-color="#10b981" data-hover="#059669"></button>
+          <button class="color-btn" style="background-color: #f59e0b;" data-color="#f59e0b" data-hover="#d97706"></button>
+          <button class="color-btn" style="background-color: #ec4899;" data-color="#ec4899" data-hover="#db2777"></button>
+        </div>
+      </div>
+
+      <div class="setting-group">
+        <label>Theme Mode</label>
+        <select id="theme-mode-select" class="theme-select" style="padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-color); background: rgba(255,255,255,0.5); color: var(--text-main);">
+          <option value="system">System Default</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+      </div>
+
+      <div class="setting-group">
+        <label>Background Opacity</label>
+        <div class="opacity-slider-wrapper">
+          <input type="range" id="opacity-slider" class="opacity-slider" min="20" max="100" value="100" />
+          <span id="opacity-val">100%</span>
+        </div>
+      </div>
+
+      <div class="setting-group" style="margin-top: 8px;">
+        <label>Data Path</label>
+        <div class="path-input-group">
+          <input type="text" id="data-path-input" readonly placeholder="Default (AppData)" />
+          <button id="btn-browse-path">Browse</button>
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+          Note: Changing the path will apply on next restart. Your old data will not be moved automatically.
+        </div>
+      </div>
+
+    </div>
+  </div>
 `;
 
 // Element References
@@ -221,6 +277,25 @@ const dailyThoughtsInput = document.getElementById('daily-thoughts-input') as HT
 const btnMini = document.getElementById('btn-mini');
 const btnMinimize = document.getElementById('btn-minimize');
 const btnClose = document.getElementById('btn-close');
+const btnSettings = document.getElementById('btn-settings');
+
+// Settings Elements
+const settingsBackdrop = document.getElementById('settings-backdrop') as HTMLDivElement;
+const btnCloseSettings = document.getElementById('btn-close-settings') as HTMLButtonElement;
+const colorBtns = document.querySelectorAll('.color-btn');
+const opacitySlider = document.getElementById('opacity-slider') as HTMLInputElement;
+const opacityVal = document.getElementById('opacity-val') as HTMLSpanElement;
+const dataPathInput = document.getElementById('data-path-input') as HTMLInputElement;
+const btnBrowsePath = document.getElementById('btn-browse-path') as HTMLButtonElement;
+const themeModeSelect = document.getElementById('theme-mode-select') as HTMLSelectElement;
+
+let appConfig = {
+  themeColor: '#6366f1',
+  themeHover: '#4f46e5',
+  opacity: 100,
+  dataPath: '',
+  themeMode: 'system' as 'system' | 'light' | 'dark'
+};
 
 // Calendar Controls
 const btnPrevMonth = document.getElementById('btn-prev-month') as HTMLButtonElement;
@@ -231,6 +306,8 @@ const calendarGrid = document.getElementById('calendar-grid') as HTMLDivElement;
 // Detail Controls
 const btnBackCalendar = document.getElementById('btn-back-calendar') as HTMLButtonElement;
 const detailDateTitle = document.getElementById('detail-date-title') as HTMLSpanElement;
+const btnPrevDay = document.getElementById('btn-prev-day') as HTMLButtonElement;
+const btnNextDay = document.getElementById('btn-next-day') as HTMLButtonElement;
 
 const imageInput = document.getElementById('image-input') as HTMLInputElement;
 // Note: We'll now capture images globally from clipboard instead of a dedicated button, 
@@ -319,6 +396,73 @@ detailDate.addEventListener('change', () => {
 if (window.electronAPI) {
   btnMinimize?.addEventListener('click', () => window.electronAPI.minimize());
   btnClose?.addEventListener('click', () => window.electronAPI.close());
+  btnSettings?.addEventListener('click', () => {
+    settingsBackdrop.classList.add('open');
+  });
+  btnCloseSettings?.addEventListener('click', () => {
+    settingsBackdrop.classList.remove('open');
+  });
+
+  // Settings Logic
+  const applyConfigToUI = () => {
+    document.documentElement.style.setProperty('--primary', appConfig.themeColor);
+    document.documentElement.style.setProperty('--primary-hover', appConfig.themeHover);
+    document.documentElement.style.setProperty('--app-opacity', (appConfig.opacity / 100).toString());
+    
+    document.documentElement.setAttribute('data-theme', appConfig.themeMode || 'system');
+    if (themeModeSelect) themeModeSelect.value = appConfig.themeMode || 'system';
+
+    colorBtns.forEach(b => {
+      if (b.getAttribute('data-color') === appConfig.themeColor) b.classList.add('active');
+      else b.classList.remove('active');
+    });
+
+    opacitySlider.value = appConfig.opacity.toString();
+    opacityVal.textContent = appConfig.opacity + '%';
+    dataPathInput.value = appConfig.dataPath || 'Default (AppData)';
+  };
+
+  colorBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      appConfig.themeColor = btn.getAttribute('data-color') || appConfig.themeColor;
+      appConfig.themeHover = btn.getAttribute('data-hover') || appConfig.themeHover;
+      applyConfigToUI();
+      window.electronAPI.saveConfig(appConfig);
+    });
+  });
+
+  if (themeModeSelect) {
+    themeModeSelect.addEventListener('change', () => {
+      appConfig.themeMode = themeModeSelect.value as 'system' | 'light' | 'dark';
+      applyConfigToUI();
+      window.electronAPI.saveConfig(appConfig);
+    });
+  }
+
+  opacitySlider.addEventListener('input', () => {
+    appConfig.opacity = parseInt(opacitySlider.value);
+    applyConfigToUI();
+    window.electronAPI.saveConfig(appConfig);
+  });
+
+  btnBrowsePath?.addEventListener('click', async () => {
+    const newPath = await window.electronAPI.selectFolder();
+    if (newPath) {
+      appConfig.dataPath = newPath;
+      applyConfigToUI();
+      window.electronAPI.saveConfig(appConfig);
+      alert('Data path updated! Please restart the application to use the new folder.');
+    }
+  });
+
+  // Init Config
+  window.electronAPI.getConfig().then((cfg: any) => {
+    if (cfg) {
+      appConfig = { ...appConfig, ...cfg };
+      applyConfigToUI();
+    }
+  });
+
   btnMini?.addEventListener('click', () => {
     isMiniMode = !isMiniMode;
     window.electronAPI.toggleMiniMode(isMiniMode);
@@ -365,6 +509,18 @@ dailyThoughtsInput.addEventListener('input', () => {
 });
 
 btnBackCalendar.addEventListener('click', showCalendar);
+
+btnPrevDay.addEventListener('click', () => {
+  const d = new Date(currentViewDate);
+  d.setDate(d.getDate() - 1);
+  showDetail(getLocalISODate(d));
+});
+
+btnNextDay.addEventListener('click', () => {
+  const d = new Date(currentViewDate);
+  d.setDate(d.getDate() + 1);
+  showDetail(getLocalISODate(d));
+});
 
 // Calendar Rendering
 btnPrevMonth.addEventListener('click', () => { currentMonthOffset--; renderCalendar(); });

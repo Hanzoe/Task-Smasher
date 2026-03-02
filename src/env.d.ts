@@ -26,5 +26,10 @@ interface Window {
     saveNotes: (notes: Record<string, string>) => void;
     saveImage: (filePath: string) => Promise<string | null>;
     saveImageFromBuffer: (buffer: ArrayBuffer, mimeType: string) => Promise<string | null>;
+    
+    // Config IPCs
+    getConfig: () => Promise<any>;
+    saveConfig: (cfg: any) => void;
+    selectFolder: () => Promise<string | null>;
   }
 }

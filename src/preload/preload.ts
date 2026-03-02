@@ -10,5 +10,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getNotes: () => ipcRenderer.invoke('get-notes'),
   saveNotes: (notes: Record<string, string>) => ipcRenderer.send('save-notes', notes),
   saveImage: (filePath: string) => ipcRenderer.invoke('save-image', filePath),
-  saveImageFromBuffer: (buffer: ArrayBuffer, mimeType: string) => ipcRenderer.invoke('save-image-from-buffer', buffer, mimeType)
+  saveImageFromBuffer: (buffer: ArrayBuffer, mimeType: string) => ipcRenderer.invoke('save-image-from-buffer', buffer, mimeType),
+
+  // Config IPCs
+  getConfig: () => ipcRenderer.invoke('get-config'),
+  saveConfig: (cfg: any) => ipcRenderer.send('save-config', cfg),
+  selectFolder: () => ipcRenderer.invoke('select-folder')
 })
