@@ -1,0 +1,30 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Build outputs
+dist/
+dist-electron/
+release/
+
+# Electron builder cache
+.cache/
+
+# TypeScript
+*.tsbuildinfo
+
+# Editor directories
+.vscode/
+.idea/
+
+# OS generated
+.DS_Store
+Thumbs.db
+
+# Data files (user-specific, not code)
+todos.json
+daily-notes.json
+
+# Agent brain
+.agents/
+.gemini/

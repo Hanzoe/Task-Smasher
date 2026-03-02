@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "skills": {
+    "desktop": {
+      "source": "lobehub/lobehub",
+      "sourceType": "github",
+      "computedHash": "25047b2eedc315aa9f6688f69511a48b8cec40d44bc50a6abcebb6ec6d93a0de"
+    },
+    "software-architecture": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "computedHash": "87cf49408fdf09614ca9e39e3f2a3e8fd4ff5f628f72f70e142bbaa1c32f046e"
+    }
+  }
+}
