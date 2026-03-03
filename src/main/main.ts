@@ -119,9 +119,10 @@ ipcMain.handle('get-todos', () => {
   return []
 })
 
-ipcMain.on('save-todos', (_, todos) => {
+ipcMain.on('save-todos', async (_, todos) => {
   try {
-    fs.writeFileSync(storePath, JSON.stringify(todos))
+    const data = JSON.stringify(todos);
+    await fs.promises.writeFile(storePath, data, 'utf8');
   } catch (error) {
     console.error('Failed to save todos', error)
   }
@@ -139,9 +140,10 @@ ipcMain.handle('get-notes', () => {
   return {} // returns a map of date -> text
 })
 
-ipcMain.on('save-notes', (_, notes) => {
+ipcMain.on('save-notes', async (_, notes) => {
   try {
-    fs.writeFileSync(notesPath, JSON.stringify(notes))
+    const data = JSON.stringify(notes);
+    await fs.promises.writeFile(notesPath, data, 'utf8');
   } catch (error) {
     console.error('Failed to save notes', error)
   }
@@ -184,9 +186,10 @@ ipcMain.handle('get-config', () => {
   return { customDataPath: '' };
 });
 
-ipcMain.on('save-config', (_, cfg) => {
+ipcMain.on('save-config', async (_, cfg) => {
   try {
-    fs.writeFileSync(configPath, JSON.stringify(cfg), 'utf8');
+    const data = JSON.stringify(cfg);
+    await fs.promises.writeFile(configPath, data, 'utf8');
   } catch (e) {}
 });
 

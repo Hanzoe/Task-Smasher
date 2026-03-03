@@ -1002,23 +1002,31 @@ document.querySelectorAll('.quadrant').forEach(quadrant => {
   });
 });
 
-// Storage Logic 
+// Storage Logic
+let saveTodosTimeout: number | null = null;
 function saveTodos() {
-  if (window.electronAPI && window.electronAPI.saveTodos) {
-    window.electronAPI.saveTodos(todos);
-  } else {
-    // Fallback for browser dev
-    localStorage.setItem('todos', JSON.stringify(todos));
-  }
+  if (saveTodosTimeout) window.clearTimeout(saveTodosTimeout);
+  saveTodosTimeout = window.setTimeout(() => {
+    if (window.electronAPI && window.electronAPI.saveTodos) {
+      window.electronAPI.saveTodos(todos);
+    } else {
+      // Fallback for browser dev
+      localStorage.setItem('todos', JSON.stringify(todos));
+    }
+  }, 300); // 300ms debounce
 }
 
+let saveNotesTimeout: number | null = null;
 function saveNotes() {
-  if (window.electronAPI && window.electronAPI.saveNotes) {
-    window.electronAPI.saveNotes(dailyNotes);
-  } else {
-    // Fallback for browser dev
-    localStorage.setItem('dailyNotes', JSON.stringify(dailyNotes));
-  }
+  if (saveNotesTimeout) window.clearTimeout(saveNotesTimeout);
+  saveNotesTimeout = window.setTimeout(() => {
+    if (window.electronAPI && window.electronAPI.saveNotes) {
+      window.electronAPI.saveNotes(dailyNotes);
+    } else {
+      // Fallback for browser dev
+      localStorage.setItem('dailyNotes', JSON.stringify(dailyNotes));
+    }
+  }, 300);
 }
 
 async function loadTodos() {

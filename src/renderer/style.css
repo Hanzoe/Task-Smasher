@@ -90,7 +90,7 @@ body {
   cursor: pointer;
   padding: 6px;
   border-radius: 6px;
-  transition: all 0.2s ease;
+  
 }
 
 .action-btn:hover {
@@ -129,17 +129,12 @@ body {
   height: 100%;
   padding: 20px;
   overflow-y: auto;
-  animation: fadeIn 0.3s ease-in;
+  
 }
 
 .view-panel.active {
   display: flex;
   flex-direction: column;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.98); }
-  to { opacity: 1; transform: scale(1); }
 }
 
 /* Typography */
@@ -172,7 +167,7 @@ input[type='text'] {
   font-family: inherit;
   font-size: 1rem;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  
 }
 
 @media (prefers-color-scheme: dark) {
@@ -198,7 +193,7 @@ button.primary {
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
+  
 }
 
 button.primary:hover {
@@ -226,8 +221,7 @@ button.primary:active {
   background: rgba(255, 255, 255, 0.4);
   border-radius: 8px;
   border: 1px solid var(--border-color);
-  transition: transform 0.2s, background 0.2s;
-  animation: slideIn 0.3s ease-out forwards;
+  
 }
 
 @media (prefers-color-scheme: dark) {
@@ -294,7 +288,7 @@ button.primary:active {
   cursor: pointer;
   padding: 6px;
   border-radius: 4px;
-  transition: color 0.2s, background 0.2s;
+  
   display: flex;
   position: relative;
 }
@@ -326,7 +320,7 @@ button.primary:active {
   outline: none;
   cursor: pointer;
   position: relative;
-  transition: background 0.2s, border-color 0.2s;
+  
 }
 
 .todo-checkbox:checked {
@@ -353,7 +347,7 @@ button.primary:active {
   cursor: pointer;
   padding: 6px;
   border-radius: 4px;
-  transition: color 0.2s, background 0.2s;
+  
   flex-shrink: 0; /* never compress the icon */
   display: flex;
   align-items: center;
@@ -365,16 +359,6 @@ button.primary:active {
   background: rgba(239, 68, 68, 0.1);
 }
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
@@ -447,7 +431,7 @@ body.mini-mode .todo-item {
   cursor: pointer;
   font-family: inherit;
   font-size: 0.9rem;
-  transition: all 0.2s;
+  
 }
 
 @media (prefers-color-scheme: dark) {
@@ -507,7 +491,7 @@ body.mini-mode .todo-item {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  
 }
 
 .btn-icon:hover {
@@ -665,7 +649,7 @@ body.mini-mode .todo-item {
   font-weight: bold;
   font-size: 1.2rem;
   cursor: pointer;
-  transition: background 0.2s;
+  
 }
 
 .inline-add-form button:hover {
@@ -707,7 +691,7 @@ body.mini-mode .todo-item {
   justify-content: center;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease;
+  
 }
 
 .image-zoom-overlay.active {
@@ -722,7 +706,7 @@ body.mini-mode .todo-item {
   border-radius: 8px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.5);
   transform: scale(0.95);
-  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  
 }
 
 .image-zoom-overlay.active .zoomed-image {
@@ -744,7 +728,7 @@ body.mini-mode .todo-item {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s;
+  
 }
 
 .close-zoom-btn:hover {
@@ -899,7 +883,7 @@ body.mini-mode .quadrant-q4 .todo-item::before { content: ''; width: 6px; height
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  transition: all 0.2s;
+  
 }
 
 @media (prefers-color-scheme: dark) {
@@ -948,7 +932,7 @@ body.mini-mode .quadrant-q4 .todo-item::before { content: ''; width: 6px; height
   flex-direction: column;
   align-items: center;
   gap: 1px;
-  transition: transform 0.2s;
+  
 }
 
 .stat-card:hover { transform: translateY(-2px); }
@@ -987,7 +971,7 @@ body.mini-mode .quadrant-q4 .todo-item::before { content: ''; width: 6px; height
   display: flex;
   flex-direction: column;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  
   position: relative;
   overflow: hidden;
 }
@@ -1075,7 +1059,7 @@ body.mini-mode .quadrant-q4 .todo-item::before { content: ''; width: 6px; height
   height: 100%;
   border-radius: 2px;
   background: linear-gradient(90deg, var(--q2-color), var(--success));
-  transition: width 0.4s ease;
+  
 }
 
 
@@ -1092,7 +1076,7 @@ body.mini-mode .quadrant-q4 .todo-item::before { content: ''; width: 6px; height
   justify-content: center;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.25s ease;
+  
 }
 
 .task-detail-backdrop.open {
@@ -1112,7 +1096,7 @@ body.mini-mode .quadrant-q4 .todo-item::before { content: ''; width: 6px; height
   display: flex;
   flex-direction: column;
   transform: scale(0.96) translateY(8px);
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  
   overflow: hidden;
 }
 
@@ -1141,7 +1125,7 @@ body.mini-mode .quadrant-q4 .todo-item::before { content: ''; width: 6px; height
   outline: none;
   padding: 8px 12px;
   border-radius: 8px;
-  transition: background 0.15s, box-shadow 0.15s;
+  
   min-width: 0;
 }
 
@@ -1174,7 +1158,7 @@ body.mini-mode .quadrant-q4 .todo-item::before { content: ''; width: 6px; height
   outline: none;
   cursor: pointer;
   font-family: inherit;
-  transition: border-color 0.2s;
+  
 }
 
 .detail-panel-controls select:focus,
@@ -1294,7 +1278,7 @@ body.mini-mode .date-number {
   justify-content: center;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.25s ease;
+  
 }
 
 .settings-backdrop.open {
@@ -1314,7 +1298,7 @@ body.mini-mode .date-number {
   flex-direction: column;
   gap: 16px;
   transform: scale(0.96) translateY(8px);
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  
 }
 
 .settings-backdrop.open .settings-panel {
@@ -1356,7 +1340,7 @@ body.mini-mode .date-number {
   border-radius: 50%;
   border: 2px solid transparent;
   cursor: pointer;
-  transition: transform 0.2s;
+  
 }
 
 .color-btn:hover {
@@ -1400,7 +1384,7 @@ body.mini-mode .date-number {
   background: var(--primary);
   color: white;
   cursor: pointer;
-  transition: background 0.2s;
+  
 }
 
 .path-input-group button:hover {
