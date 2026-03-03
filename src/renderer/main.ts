@@ -1,6 +1,7 @@
 import './style.css';
-import Vditor from 'vditor';
-import 'vditor/dist/index.css';
+// @ts-ignore
+import Editor from '@toast-ui/editor';
+import '@toast-ui/editor/dist/toastui-editor.css';
 
 interface Todo {
   id: string;
@@ -19,7 +20,7 @@ let todos: Todo[] = [];
 let dailyNotes: Record<string, string> = {};
 let isMiniMode = false;
 let activeDetailTodoId: string | null = null;
-let vditorInstance: Vditor | null = null;
+let editorInstance: Editor | null = null;
 
 // Global Views
 let currentViewDate = getLocalISODate(new Date()); 
@@ -338,10 +339,10 @@ zoomOverlay?.addEventListener('click', (e) => {
 // Markdown Panel Hooks
 btnCloseDetail?.addEventListener('click', () => {
     closeDetailModal();
-    if (activeDetailTodoId && vditorInstance) {
+    if (activeDetailTodoId && editorInstance) {
        const todo = todos.find(t => t.id === activeDetailTodoId);
        if (todo) {
-           todo.detailsMarkdown = vditorInstance.getValue();
+           todo.detailsMarkdown = editorInstance.getMarkdown();
            // Save title changes
            const newTitle = detailPanelTitle?.value.trim();
            if (newTitle && newTitle !== todo.text) {
@@ -554,7 +555,17 @@ btnNextDay.addEventListener('click', () => {
 btnPrevMonth.addEventListener('click', () => { currentMonthOffset--; renderCalendar(); });
 btnNextMonth.addEventListener('click', () => { currentMonthOffset++; renderCalendar(); });
 
-function calculateStreak(): number {
+function getTasksByDateMap() {
+  const map: Record<string, Todo[]> = {};
+  for (const t of todos) {
+    const dateStr = t.createdAt.split('T')[0];
+    if (!map[dateStr]) map[dateStr] = [];
+    map[dateStr].push(t);
+  }
+  return map;
+}
+
+function calculateStreak(tasksByDate: Record<string, Todo[]>): number {
   const todayStr = getLocalISODate(new Date());
   let streak = 0;
   const checkDate = new Date();
@@ -562,7 +573,7 @@ function calculateStreak(): number {
   // Bounded loop — max 365 days back, guaranteed to exit
   for (let i = 0; i < 365; i++) {
     const dateStr = getLocalISODate(checkDate);
-    const dayTasks = todos.filter(t => t.createdAt.startsWith(dateStr));
+    const dayTasks = tasksByDate[dateStr] || [];
 
     if (dayTasks.length === 0) {
       if (dateStr === todayStr) {
@@ -607,18 +618,21 @@ function renderCalendar() {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const todayStr = getLocalISODate(new Date());
 
+  // Performance Optimization: O(N) lookup map
+  const tasksByDate = getTasksByDateMap();
+
   // ── Monthly Stats ──
   let monthTotal = 0, monthDone = 0, bestDayCount = 0, bestDayStr = '—';
   for (let d = 1; d <= daysInMonth; d++) {
     const ds = getLocalISODate(new Date(year, month, d));
-    const dayTasks = todos.filter(t => t.createdAt.startsWith(ds));
+    const dayTasks = tasksByDate[ds] || [];
     monthTotal += dayTasks.length;
     const doneTasks = dayTasks.filter(t => (t.completedDates || []).includes(ds) || t.completed).length;
     monthDone += doneTasks;
     if (doneTasks > bestDayCount) { bestDayCount = doneTasks; bestDayStr = `${d}日 (${doneTasks}✓)`; }
   }
   const completionPct = monthTotal > 0 ? Math.round(monthDone / monthTotal * 100) : 0;
-  const streak = calculateStreak();
+  const streak = calculateStreak(tasksByDate);
 
   // Update stat cards safely
   const statTotal = document.querySelector('#stat-total .stat-value');
@@ -647,7 +661,8 @@ function renderCalendar() {
     const dateObj = new Date(year, month, day);
     const dateStr = getLocalISODate(dateObj);
     
-    const dayTasks = todos.filter(t => t.createdAt.startsWith(dateStr));
+    // O(1) Lookup instead of O(N) filter
+    const dayTasks = tasksByDate[dateStr] || [];
     const completedCount = dayTasks.filter(t => (t.completedDates || []).includes(dateStr) || t.completed).length;
     const pct = dayTasks.length > 0 ? completedCount / dayTasks.length : 0;
     
@@ -858,12 +873,12 @@ function renderTodos() {
         activeDetailTodoId = todo.id;
         detailPanelTitle.value = todo.text; // Use .value since it's now an input
         
-        if (vditorInstance) {
+        if (editorInstance) {
            let rawMd = todo.detailsMarkdown || '';
            if (todo.imageUrl && !rawMd.includes(todo.imageUrl)) {
               rawMd = `![Attached Image](${todo.imageUrl})\n\n` + rawMd;
            }
-           vditorInstance.setValue(rawMd);
+           editorInstance.setMarkdown(rawMd);
         }
         
         detailRecurrence.value = todo.recurrence || 'none';
@@ -1019,35 +1034,33 @@ async function loadTodos() {
       if (savedNotes) dailyNotes = JSON.parse(savedNotes);
     }
     
-    // Initialize Vditor instance
-    vditorInstance = new Vditor('vditor-container', {
-      mode: 'ir', // Instant Rendering (Typora-like WYSIWYG)
-      toolbarConfig: { hide: true }, // Keep it clean
-      cache: { enable: false },
-      outline: { enable: false, position: 'left' },
-      upload: {
-          accept: 'image/*',
-          handler: async (files) => {
-             // Use our custom upload via IPC
-             let resultSrc = '';
-             for (const file of files) {
-                 const buffer = await file.arrayBuffer();
-                 const uri = await window.electronAPI?.saveImageFromBuffer(buffer, file.type);
-                 if (uri) {
-                     resultSrc += `![${file.name}](${uri})\n`;
-                 }
-             }
-             if (resultSrc) {
-                 vditorInstance?.insertValue(resultSrc);
-             }
-             return null;
+    // Initialize Editor instance
+    const container = document.getElementById('vditor-container');
+    if (container) {
+      editorInstance = new Editor({
+        el: container,
+        height: '100%',
+        initialEditType: 'wysiwyg',
+        previewStyle: 'vertical',
+        usageStatistics: false,
+        hideModeSwitch: true,
+        plugins: [],
+        hooks: {
+          addImageBlobHook: async (blob: Blob, callback: Function) => {
+            if (window.electronAPI && window.electronAPI.saveImageFromBuffer) {
+              const buffer = await blob.arrayBuffer();
+              const uri = await window.electronAPI.saveImageFromBuffer(buffer, blob.type);
+              if (uri) {
+                callback(uri, (blob as File).name || 'image');
+              }
+            } else {
+              callback(URL.createObjectURL(blob), 'local-image');
+            }
           }
-      },
-      after: () => {
-         // Also refresh after Vditor fully initializes
-         renderCalendar();
-      }
-    });
+        }
+      });
+      renderCalendar();
+    }
   };
   // Load data first, then show calendar with real data
   loadData().then(() => {

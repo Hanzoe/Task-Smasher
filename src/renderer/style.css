@@ -1125,7 +1125,7 @@ body.mini-mode .quadrant-q4 .todo-item::before { content: ''; width: 6px; height
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   flex-shrink: 0;
 }
 
@@ -1134,42 +1134,52 @@ body.mini-mode .quadrant-q4 .todo-item::before { content: ''; width: 6px; height
   flex: 1;
   background: none;
   border: none;
-  font-size: 1.15rem;
-  font-weight: 600;
+  font-size: 1.35rem; /* Larger title */
+  font-weight: 700;
   color: var(--text-main);
   font-family: inherit;
   outline: none;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: background 0.15s;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background 0.15s, box-shadow 0.15s;
   min-width: 0;
 }
 
 .detail-title-input:focus {
-  background: rgba(99, 102, 241, 0.07);
+  background: var(--app-bg);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.4);
 }
 
 /* Controls bar: recurrence + date */
 .detail-panel-controls {
   display: flex;
-  gap: 10px;
-  padding: 10px 20px;
+  flex-wrap: wrap; /* Prevent cramped items on small windows */
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
   border-bottom: 1px solid var(--border-color);
-  background: rgba(0, 0, 0, 0.02);
+  background: rgba(0, 0, 0, 0.03);
   flex-shrink: 0;
 }
 
 .detail-panel-controls select,
 .detail-panel-controls input[type='date'] {
-  padding: 5px 8px;
+  padding: 6px 12px;
   border-radius: 6px;
   border: 1px solid var(--border-color);
   background: var(--app-bg);
   color: var(--text-main);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  font-weight: 500;
   outline: none;
   cursor: pointer;
   font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.detail-panel-controls select:focus,
+.detail-panel-controls input[type='date']:focus {
+  border-color: var(--primary);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -1200,6 +1210,12 @@ body.mini-mode .quadrant-q4 .todo-item::before { content: ''; width: 6px; height
 .vditor-reset {
   font-family: inherit !important;
   font-size: 0.95rem !important;
+}
+
+/* Force WYSIWYG toolbars to visibly render */
+.vditor-toolbar {
+  display: flex !important;
+  z-index: 100 !important;
 }
 
 /* Daily Thoughts Area */
