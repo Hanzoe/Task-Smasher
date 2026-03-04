@@ -3,10 +3,18 @@ import './style.css';
 import Editor from '@toast-ui/editor';
 import '@toast-ui/editor/dist/toastui-editor.css';
 
+// A point-in-time snapshot of a task's notes, keyed by the date it was saved.
+// Edits made on date D are stored here and become visible from D onward (not before).
+interface TodoSnapshot {
+  date: string;     // YYYY-MM-DD when this version was written
+  markdown: string;
+}
+
 interface Todo {
   id: string;
   text: string;
-  detailsMarkdown?: string;
+  detailsMarkdown?: string;   // legacy field — kept for backwards-compat read
+  detailsSnapshots?: TodoSnapshot[]; // sorted asc by date; replaces detailsMarkdown
   completed: boolean; // legacy
   completedDates?: string[]; // array of YYYY-MM-DD
   createdAt: string;
@@ -14,13 +22,65 @@ interface Todo {
   imageUrl?: string;
   quadrant: 'Q1' | 'Q2' | 'Q3' | 'Q4';
   recurrence?: 'none' | 'daily' | 'weekly' | 'monthly';
+  deadline?: string; // YYYY-MM-DD: task appears on every day from createdAt to deadline
 }
 
 let todos: Todo[] = [];
 let dailyNotes: Record<string, string> = {};
 let isMiniMode = false;
 let activeDetailTodoId: string | null = null;
+let activeDetailViewDate: string | null = null; // the day-context when the detail panel was opened
 let editorInstance: Editor | null = null;
+
+// ── Snapshot helpers ──────────────────────────────────────────────────────────
+
+/** Returns the markdown applicable for a given view date:
+ *  picks the latest snapshot whose date ≤ viewDate.
+ *  Falls back to legacy detailsMarkdown if no snapshots exist. */
+function getMarkdownForDate(todo: Todo, viewDate: string): string {
+  if (todo.detailsSnapshots && todo.detailsSnapshots.length > 0) {
+    const applicable = todo.detailsSnapshots.filter(s => s.date <= viewDate);
+    if (applicable.length > 0) {
+      return applicable[applicable.length - 1].markdown;
+    }
+    return ''; // viewDate is before the first snapshot
+  }
+  // Legacy fallback
+  return todo.detailsMarkdown || '';
+}
+
+/** Saves (or upserts) a snapshot for the given date.
+ *  Keeps array sorted ascending by date. */
+function saveMarkdownForDate(todo: Todo, viewDate: string, markdown: string): void {
+  if (!todo.detailsSnapshots) {
+    // Migrate legacy detailsMarkdown into snapshots array
+    todo.detailsSnapshots = [];
+    if (todo.detailsMarkdown) {
+      const legacyDate = todo.createdAt.split('T')[0];
+      todo.detailsSnapshots.push({ date: legacyDate, markdown: todo.detailsMarkdown });
+    }
+  }
+  const idx = todo.detailsSnapshots.findIndex(s => s.date === viewDate);
+  if (idx >= 0) {
+    todo.detailsSnapshots[idx].markdown = markdown;
+  } else {
+    todo.detailsSnapshots.push({ date: viewDate, markdown });
+    todo.detailsSnapshots.sort((a, b) => a.date.localeCompare(b.date));
+  }
+  // Keep legacy field in sync with the latest snapshot (for any old readers)
+  const last = todo.detailsSnapshots[todo.detailsSnapshots.length - 1];
+  todo.detailsMarkdown = last.markdown;
+}
+
+/** Returns true if the task has any notes content visible on the given date. */
+function hasNotesForDate(todo: Todo, viewDate: string): boolean {
+  if (todo.imageUrl) return true;
+  if (todo.detailsSnapshots && todo.detailsSnapshots.length > 0) {
+    return todo.detailsSnapshots.some(s => s.date <= viewDate && s.markdown.trim() !== '');
+  }
+  return !!(todo.detailsMarkdown && todo.detailsMarkdown.trim() !== '');
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 // Global Views
 let currentViewDate = getLocalISODate(new Date()); 
@@ -184,10 +244,14 @@ document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
             <option value="weekly">🔁 Weekly</option>
             <option value="monthly">🔁 Monthly</option>
          </select>
-         <input type="date" id="detail-date" title="Move Date" />
-         <div style="display: flex; align-items: center; gap: 4px; margin-left: 8px; border-left: 1px solid var(--border-color); padding-left: 8px;">
-            <span style="font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;">Copy to:</span>
-            <input type="date" id="copy-date" title="Copy to Date" />
+         <div style="display: flex; align-items: center; gap: 4px;">
+            <span style="font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;">Start:</span>
+            <input type="date" id="detail-date" title="Start Date" />
+         </div>
+         <div style="display: flex; align-items: center; gap: 4px; border-left: 1px solid var(--border-color); padding-left: 8px;">
+            <span style="font-size: 0.8rem; color: var(--text-muted); white-space: nowrap;">🏁 Deadline:</span>
+            <input type="date" id="deadline-date" title="Deadline Date (task appears every day until this date)" />
+            <button type="button" id="btn-clear-deadline" title="Clear Deadline" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem;padding:0 2px;line-height:1;">×</button>
          </div>
       </div>
       <div class="detail-panel-body">
@@ -264,7 +328,8 @@ const btnCloseDetail = document.getElementById('btn-close-detail') as HTMLButton
 const detailPanelTitle = document.getElementById('detail-panel-title') as HTMLInputElement;
 const detailRecurrence = document.getElementById('detail-recurrence') as HTMLSelectElement;
 const detailDate = document.getElementById('detail-date') as HTMLInputElement;
-const copyDate = document.getElementById('copy-date') as HTMLInputElement;
+const deadlineDate = document.getElementById('deadline-date') as HTMLInputElement;
+const btnClearDeadline = document.getElementById('btn-clear-deadline') as HTMLButtonElement;
 
 function openDetailModal() {
   taskDetailBackdrop.classList.add('open');
@@ -341,8 +406,9 @@ btnCloseDetail?.addEventListener('click', () => {
     closeDetailModal();
     if (activeDetailTodoId && editorInstance) {
        const todo = todos.find(t => t.id === activeDetailTodoId);
-       if (todo) {
-           todo.detailsMarkdown = editorInstance.getMarkdown();
+       if (todo && activeDetailViewDate) {
+           // Save the markdown as a snapshot for the day the panel was opened from
+           saveMarkdownForDate(todo, activeDetailViewDate, editorInstance.getMarkdown());
            // Save title changes
            const newTitle = detailPanelTitle?.value.trim();
            if (newTitle && newTitle !== todo.text) {
@@ -352,6 +418,7 @@ btnCloseDetail?.addEventListener('click', () => {
        }
     }
     activeDetailTodoId = null;
+    activeDetailViewDate = null;
     saveTodos();
 });
 
@@ -398,28 +465,32 @@ detailDate.addEventListener('change', () => {
     }
 });
 
-copyDate.addEventListener('change', () => {
+
+// Deadline date change: set the deadline on the task (no copy, same task spans the range)
+deadlineDate.addEventListener('change', () => {
     if (activeDetailTodoId) {
        const todo = todos.find(t => t.id === activeDetailTodoId);
-       if (todo && copyDate.value) {
-           const newDateStr = copyDate.value;
-           const newDate = newDateStr + "T00:00:00.000Z";
-           if (todo.createdAt !== newDate) {
-               const newTodo = { 
-                   ...todo, 
-                   id: Date.now().toString(), 
-                   createdAt: newDate, 
-                   completedDates: [], 
-                   completed: false 
-               };
-               todos.push(newTodo);
-               copyDate.value = '';
-               renderTodos();
-               saveTodos();
-           }
+       if (todo) {
+           todo.deadline = deadlineDate.value || undefined;
+           renderTodos();
+           saveTodos();
        }
     }
 });
+
+// Clear Deadline button
+btnClearDeadline.addEventListener('click', () => {
+    if (activeDetailTodoId) {
+        const todo = todos.find(t => t.id === activeDetailTodoId);
+        if (todo) {
+            todo.deadline = undefined;
+            deadlineDate.value = '';
+            renderTodos();
+            saveTodos();
+        }
+    }
+});
+
 
 // Window Controls
 if (window.electronAPI) {
@@ -555,17 +626,39 @@ btnNextDay.addEventListener('click', () => {
 btnPrevMonth.addEventListener('click', () => { currentMonthOffset--; renderCalendar(); });
 btnNextMonth.addEventListener('click', () => { currentMonthOffset++; renderCalendar(); });
 
-function getTasksByDateMap() {
-  const map: Record<string, Todo[]> = {};
-  for (const t of todos) {
-    const dateStr = t.createdAt.split('T')[0];
-    if (!map[dateStr]) map[dateStr] = [];
-    map[dateStr].push(t);
-  }
-  return map;
+/** Single source of truth: returns every task visible on a given date,
+ *  handling origin match, deadline range, and all recurrence types —
+ *  identical logic to the renderTodos filter. */
+function getTasksForDate(dateStr: string): Todo[] {
+  const viewDateObj = new Date(dateStr);
+  return todos.filter(t => {
+    const createdDateStr = t.createdAt.split('T')[0];
+
+    // Exact origin match
+    if (createdDateStr === dateStr) return true;
+
+    // Deadline range (appears every day from createdAt to deadline)
+    if (t.deadline && dateStr > createdDateStr && dateStr <= t.deadline) return true;
+
+    // Recurrence
+    if (!t.recurrence || t.recurrence === 'none') return false;
+    if (t.deadline && dateStr > t.deadline) return false; // stop at deadline
+
+    const createdDateObj = new Date(createdDateStr);
+    if (viewDateObj < createdDateObj) return false;
+
+    if (t.recurrence === 'daily') return true;
+    if (t.recurrence === 'weekly') return createdDateObj.getDay() === viewDateObj.getDay();
+    if (t.recurrence === 'monthly') return createdDateObj.getDate() === viewDateObj.getDate();
+    if (t.recurrence === 'yearly') {
+      return createdDateObj.getMonth() === viewDateObj.getMonth() &&
+             createdDateObj.getDate() === viewDateObj.getDate();
+    }
+    return false;
+  });
 }
 
-function calculateStreak(tasksByDate: Record<string, Todo[]>): number {
+function calculateStreak(): number {
   const todayStr = getLocalISODate(new Date());
   let streak = 0;
   const checkDate = new Date();
@@ -573,7 +666,7 @@ function calculateStreak(tasksByDate: Record<string, Todo[]>): number {
   // Bounded loop — max 365 days back, guaranteed to exit
   for (let i = 0; i < 365; i++) {
     const dateStr = getLocalISODate(checkDate);
-    const dayTasks = tasksByDate[dateStr] || [];
+    const dayTasks = getTasksForDate(dateStr);
 
     if (dayTasks.length === 0) {
       if (dateStr === todayStr) {
@@ -584,9 +677,11 @@ function calculateStreak(tasksByDate: Record<string, Todo[]>): number {
       break; // Past day with no tasks → streak ends
     }
 
-    const allDone = dayTasks.every(t =>
-      (t.completedDates || []).includes(dateStr) || t.completed
-    );
+    const allDone = dayTasks.every((t: Todo) => {
+      if ((t.completedDates || []).includes(dateStr)) return true;
+      if (t.completed && t.createdAt.startsWith(dateStr)) return true;
+      return false;
+    });
 
     if (!allDone) {
       if (dateStr === todayStr) {
@@ -618,21 +713,22 @@ function renderCalendar() {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const todayStr = getLocalISODate(new Date());
 
-  // Performance Optimization: O(N) lookup map
-  const tasksByDate = getTasksByDateMap();
-
   // ── Monthly Stats ──
   let monthTotal = 0, monthDone = 0, bestDayCount = 0, bestDayStr = '—';
   for (let d = 1; d <= daysInMonth; d++) {
     const ds = getLocalISODate(new Date(year, month, d));
-    const dayTasks = tasksByDate[ds] || [];
+    const dayTasks = getTasksForDate(ds);
     monthTotal += dayTasks.length;
-    const doneTasks = dayTasks.filter(t => (t.completedDates || []).includes(ds) || t.completed).length;
+    const doneTasks = dayTasks.filter((t: Todo) => {
+      if ((t.completedDates || []).includes(ds)) return true;
+      if (t.completed && t.createdAt.startsWith(ds)) return true;
+      return false;
+    }).length;
     monthDone += doneTasks;
     if (doneTasks > bestDayCount) { bestDayCount = doneTasks; bestDayStr = `${d}日 (${doneTasks}✓)`; }
   }
   const completionPct = monthTotal > 0 ? Math.round(monthDone / monthTotal * 100) : 0;
-  const streak = calculateStreak(tasksByDate);
+  const streak = calculateStreak();
 
   // Update stat cards safely
   const statTotal = document.querySelector('#stat-total .stat-value');
@@ -661,9 +757,12 @@ function renderCalendar() {
     const dateObj = new Date(year, month, day);
     const dateStr = getLocalISODate(dateObj);
     
-    // O(1) Lookup instead of O(N) filter
-    const dayTasks = tasksByDate[dateStr] || [];
-    const completedCount = dayTasks.filter(t => (t.completedDates || []).includes(dateStr) || t.completed).length;
+    const dayTasks = getTasksForDate(dateStr);
+    const completedCount = dayTasks.filter((t: Todo) => {
+      if ((t.completedDates || []).includes(dateStr)) return true;
+      if (t.completed && t.createdAt.startsWith(dateStr)) return true;
+      return false;
+    }).length;
     const pct = dayTasks.length > 0 ? completedCount / dayTasks.length : 0;
     
     const cell = document.createElement('div');
@@ -758,9 +857,13 @@ imageInput.addEventListener('change', () => {
   }
 });
 
-// Clipboard Paste support
+// Clipboard Paste support (for staging images when detail panel / editor is NOT open)
 document.addEventListener('paste', async (e) => {
   if (!viewDetail.classList.contains('active')) return;
+  
+  // If the task detail modal (markdown editor) is open, let the editor's own
+  // paste handler deal with it. Don't stage into the pending preview.
+  if (taskDetailBackdrop.classList.contains('open')) return;
 
   const items = e.clipboardData?.items;
   if (!items) return;
@@ -801,16 +904,21 @@ function renderTodos() {
   const viewDateStr = currentViewDate;
 
   const filteredTodos = todos.filter(t => {
-    // Exact Origin Match
-    if (t.createdAt && t.createdAt.startsWith(viewDateStr)) return true;
-    
-    // Evaluate recurrence
+    const createdDateStr = t.createdAt.split('T')[0];
+
+    // Exact Origin Match (the day the task was created)
+    if (createdDateStr === viewDateStr) return true;
+
+    // Deadline range: task appears on every day from createdAt up to (and including) deadline
+    // This replaces the old "Copy to" pattern — same task, independent per-day completion
+    if (t.deadline && viewDateStr > createdDateStr && viewDateStr <= t.deadline) return true;
+
+    // Evaluate recurrence (but stop at deadline if set)
     if (!t.recurrence || t.recurrence === 'none') return false;
+    if (t.deadline && viewDateStr > t.deadline) return false; // stop recurrence at deadline
     
     // Don't show recurrences before their creation date!
-    const createdDateRaw = t.createdAt.split('T')[0];
-    if (!createdDateRaw) return false;
-    const createdDateObj = new Date(createdDateRaw);
+    const createdDateObj = new Date(createdDateStr);
     if (viewDateObj < createdDateObj) return false;
     
     if (t.recurrence === 'daily') return true;
@@ -855,7 +963,7 @@ function renderTodos() {
       <div class="todo-content" style="cursor: pointer;" title="Click to view details">
         <div class="todo-text-row">
           <input type="checkbox" class="todo-checkbox" ${isCompletedToday ? 'checked' : ''}>
-          <span class="todo-text" style="${todo.detailsMarkdown || todo.imageUrl ? 'text-decoration-thickness: 2px;' : ''}">${todo.text} ${todo.detailsMarkdown || todo.imageUrl ? '📝' : ''}</span>
+          <span class="todo-text" style="${hasNotesForDate(todo, viewDateStr) ? 'text-decoration-thickness: 2px;' : ''}">${todo.text} ${hasNotesForDate(todo, viewDateStr) ? '📝' : ''}</span>
         </div>
       </div>
       <div style="display:flex; gap: 4px; align-items:center;">
@@ -871,10 +979,13 @@ function renderTodos() {
         if ((e.target as HTMLElement).tagName.toLowerCase() === 'input') return;
         
         activeDetailTodoId = todo.id;
-        detailPanelTitle.value = todo.text; // Use .value since it's now an input
+        activeDetailViewDate = viewDateStr; // remember which day context we're editing from
+        detailPanelTitle.value = todo.text;
         
         if (editorInstance) {
-           let rawMd = todo.detailsMarkdown || '';
+           // Load the markdown version that was valid on this day
+           let rawMd = getMarkdownForDate(todo, viewDateStr);
+           // Prepend image whether or not legacy imageUrl exists
            if (todo.imageUrl && !rawMd.includes(todo.imageUrl)) {
               rawMd = `![Attached Image](${todo.imageUrl})\n\n` + rawMd;
            }
@@ -883,7 +994,7 @@ function renderTodos() {
         
         detailRecurrence.value = todo.recurrence || 'none';
         detailDate.value = todo.createdAt.split('T')[0];
-        copyDate.value = '';
+        deadlineDate.value = todo.deadline || '';
         
         openDetailModal();
     });
@@ -1054,6 +1165,7 @@ async function loadTodos() {
         hideModeSwitch: true,
         plugins: [],
         hooks: {
+          // This hook handles toolbar-based image uploads
           addImageBlobHook: async (blob: Blob, callback: Function) => {
             if (window.electronAPI && window.electronAPI.saveImageFromBuffer) {
               const buffer = await blob.arrayBuffer();
@@ -1067,6 +1179,44 @@ async function loadTodos() {
           }
         }
       });
+
+      // Fix: addImageBlobHook does NOT fire for clipboard paste in WYSIWYG mode.
+      // We manually intercept paste on the editor's editable area.
+      // We use a capture-phase listener on the container to intercept before Toast UI processes it.
+      container.addEventListener('paste', async (e: ClipboardEvent) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+
+        let imageItem: DataTransferItem | null = null;
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.startsWith('image/')) {
+            imageItem = items[i];
+            break;
+          }
+        }
+
+        if (!imageItem) return; // no image in clipboard, let Toast UI handle normally
+
+        e.preventDefault(); // prevent Toast UI's default paste handling which ignores images
+        e.stopPropagation();
+
+        const blob = imageItem.getAsFile();
+        if (!blob) return;
+
+        let imageUri: string | null = null;
+        if (window.electronAPI && window.electronAPI.saveImageFromBuffer) {
+          const buffer = await blob.arrayBuffer();
+          imageUri = await window.electronAPI.saveImageFromBuffer(buffer, blob.type);
+        } else {
+          imageUri = URL.createObjectURL(blob);
+        }
+
+        if (imageUri && editorInstance) {
+          // Use Toast UI Editor's exec API to insert image at cursor position
+          editorInstance.exec('addImage', { imageUrl: imageUri, altText: 'image' });
+        }
+      }, true); // capture phase so we get it before Toast UI's own listeners
+
       renderCalendar();
     }
   };
