@@ -14,6 +14,20 @@
     "appId": "com.tasksmasher.app",
     "productName": "Task Smasher",
     "forceCodeSigning": false,
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "build/**/*",
+      "package.json",
+      "!node_modules/**/*",
+      "!src/**/*",
+      "!.agents/**/*",
+      "!.agent/**/*",
+      "!.git/**/*",
+      "!release/**/*",
+      "!*.md",
+      "!*.txt"
+    ],
     "directories": {
       "output": "release"
     },
